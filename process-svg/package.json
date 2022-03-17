@@ -6,6 +6,9 @@
   "author": "Fabien <frassinier@talend.com>",
   "license": "Apache-2.0",
   "private": true,
+  "scripts": {
+    "start": "tsc && node src/server.js"
+  },
   "dependencies": {
     "body-parser": "^1.19.2",
     "compression": "^1.7.4",
