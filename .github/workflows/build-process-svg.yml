@@ -47,9 +47,10 @@ jobs:
           context: process-svg
           push: true
           tags: |
-            ${{ IMAGE_NAME }}:latest
-            ${{ IMAGE_NAME }}:${{ steps.npm.outputs.version }}
-            ghcr.io/${{ IMAGE_NAME }}:latest
+            ${{ env.IMAGE_NAME }}:latest
+            ${{ env.IMAGE_NAME }}:${{ steps.npm.outputs.version }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.npm.outputs.version }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             VERSION=${{ steps.npm.outputs.version }}
