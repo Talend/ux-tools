@@ -9,14 +9,12 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
 
-defaults:
-  run:
-    working-directory: process-svg
-
 jobs:
   build-and-push-image:
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
+    env:
+      working-directory: process-svg
     permissions:
       contents: read
       packages: write
