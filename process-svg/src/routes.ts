@@ -7,7 +7,7 @@ const router = express.Router();
 
 router.get("/", async (req, res) => {
   await res.send(`
-      <form id="form" method="post" action="/process/32" enctype="multipart/form-data">
+      <form id="form" method="post" action="/process/24" enctype="multipart/form-data">
           <label for="size">Size</label>
           <select id="size" name="size" onchange="change(this.value);">
             <option value="24">24</option>
