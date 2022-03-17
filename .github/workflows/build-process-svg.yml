@@ -7,9 +7,8 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ jq -r ".name" process-svg/package.json }}
-  IMAGE_DESCRIPTION: $ {{ jq -r ".description" process-svg/package.json }}
-  IMAGE_VERSION: ${{ jq -r ".version" process-svg/package.json }}
+  IMAGE_NAME: process-svg
+
 jobs:
   build-and-push-image:
     if: github.event.pull_request.draft == false
@@ -37,9 +36,8 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           labels: |
-            org.opencontainers.image.title=$IMAGE_NAME
-            org.opencontainers.image.description=$IMAGE_DESCRIPTION
-            org.opencontainers.image.version=$IMAGE_VERSION
+            org.opencontainers.image.title=process-svg
+            org.opencontainers.image.version=1.0.0
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v2
@@ -48,5 +46,3 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          build-args: |
-            VERSION=${{ jq -r ".version" process-svg/package.json }}
