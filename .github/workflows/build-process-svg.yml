@@ -48,7 +48,7 @@ jobs:
           context: process-svg
           push: true
           tags: |
-            {{ env.REGISTRY }}/talend/ux-tools:{{ steps.npm.outputs.version }}
+            "{{ env.REGISTRY }}/talend/ux-tools:{{ steps.npm.outputs.version }}"
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             VERSION=${{ steps.npm.outputs.version }}
