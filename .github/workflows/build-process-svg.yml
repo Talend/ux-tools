@@ -8,6 +8,7 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: process-svg
+  IMAGE_VERSION: 1.0.0
 
 jobs:
   build-and-push-image:
@@ -36,8 +37,8 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           labels: |
-            org.opencontainers.image.title=process-svg
-            org.opencontainers.image.version=1.0.0
+            org.opencontainers.image.title=${{ env.IMAGE_NAME }}
+            org.opencontainers.image.version=${{ env.IMAGE_VERSION }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v2
