@@ -7,7 +7,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  IMAGE_NAME: process-svg
 
 jobs:
   build-and-push-image:
@@ -35,6 +35,8 @@ jobs:
         uses: docker/metadata-action@v3
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          labels: |
+            org.opencontainers.image.version=$(jq -r ".version" process-svg/package.json)
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v2
