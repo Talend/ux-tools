@@ -13,8 +13,9 @@ jobs:
   build-and-push-image:
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
-    env:
-      working-directory: process-svg
+    defaults:
+      run:
+        working-directory: process-svg
     permissions:
       contents: read
       packages: write
