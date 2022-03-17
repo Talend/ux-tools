@@ -37,6 +37,11 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
+      - name: Extract metadata from package.json
+        id: npm
+        run: |          
+          echo "::set-output name=version::$(jq -r ".version" package.json)"
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v2
         with:
@@ -44,3 +49,5 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            VERSION=${{ steps.meta.outputs.version }}
