@@ -1,0 +1,11 @@
+{
+  "name": "Icons",
+  "id": "1076116961560610584",
+  "api": "1.0.0",
+  "editorType": [
+    "figma",
+    "figjam"
+  ],
+  "main": "dist/code.js",
+  "ui": "dist/ui.html"
+}

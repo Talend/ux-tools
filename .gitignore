@@ -1,4 +1,5 @@
 .idea
+dist
 figma
 lib
 node_modules
