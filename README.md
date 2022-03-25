@@ -13,7 +13,7 @@ That's why we want to automate the process of optimization even in our Figma fil
 
 To do so, we have to ways: 
 - the downloader bin, which can be part of a GitHub Action triggered by webhook
-- the Figma plugin, which can be used on one-shot without wasting time to cut of everything which not concerns our `neutral/icon` design token.
+— the Figma plugin, which can be used in-app on a single icon and "pathfinds" anything that's not colored with the neutral/icon design token.
 
 ### Downloader
 
