@@ -1,5 +1,5 @@
 {
-  "name": "figma-icons",
+  "name": "figma-icons-downloader",
   "version": "1.0.0",
   "main": "lib/index.js",
   "private": "true",
