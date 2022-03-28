@@ -28,12 +28,14 @@ sequenceDiagram
     participant C as Client
     participant F as Figma
     participant S as Server
-    C->>F: GET icon
-    F-->>C: GET raw icon
-    C->>S: POST  raw icon
-    activate S
-    S-->>C: GET optimized icon
-    deactivate S
+    loop For all icons and their variants (12, 16 and 24px)
+        C->>F: GET icon
+        F-->>C: raw icon
+        C->>S: POST  raw icon
+        activate S
+        S-->>C: optimized icon
+        deactivate S
+    end
 ```
 
 #### Plugin
@@ -44,8 +46,10 @@ This plugin helps you to generate the simplest optimized copy of an icon, using 
 sequenceDiagram
     participant F as Figma
     participant S as Server
-    F->>S: POST current selection
-    activate S
-    S-->>F: GET optimized icon
-    deactivate S
+    loop For all selected icons
+        F->>S: POST current selection
+        activate S
+        S-->>F: optimized icon
+        deactivate S
+    end
 ```
