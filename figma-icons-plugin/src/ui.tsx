@@ -13,9 +13,11 @@ const App = () => {
 
   return (
     <div>
-      <button onClick={onCancel}>Cancel</button>
+      <button id="cancel" onClick={onCancel}>
+        Cancel
+      </button>
       <button id="create" onClick={onCreate}>
-        Create
+        Process
       </button>
     </div>
   );

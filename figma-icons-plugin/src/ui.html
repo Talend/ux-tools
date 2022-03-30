@@ -5,28 +5,31 @@
 <script>
   window.onmessage = async (event) => {
     if (event.data.pluginMessage.type === "networkRequest") {
-      const formData = new FormData();
-      const file = new Blob([event.data.pluginMessage.data], {
-        type: "image/svg+xml",
-      });
-      formData.append("file", file);
-      const res = await fetch(
-        `https://svg-optimizer.tools.dev.datapwn.com/process/${
-          event.data.pluginMessage.size || "24"
-        }`,
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
-      const blob = await res.blob();
-      const blobText = await blob.text();
+      const data = [];
+      for (const svg of event.data.pluginMessage.data) {
+        const formData = new FormData();
+        const file = new Blob([svg.data], {
+          type: "image/svg+xml",
+        });
+        formData.append("file", file);
+        const res = await fetch(
+          `https://svg-optimizer.tools.dev.datapwn.com/process/${
+            svg.size || "24"
+          }`,
+          {
+            method: "POST",
+            body: formData,
+          }
+        );
+        const blob = await res.blob();
+        const blobText = await blob.text();
+        data.push({ ...svg , data: blobText });
+      }
       window.parent.postMessage(
         {
           pluginMessage: {
             type: "create-svg",
-            data: blobText,
-            size: event.data.pluginMessage.size,
+            data,
             styleId: event.data.pluginMessage.styleId,
           },
         },
