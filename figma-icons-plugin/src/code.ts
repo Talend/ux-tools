@@ -82,16 +82,25 @@ figma.ui.onmessage = async (msg) => {
       }
       components[name][size] = data;
     }
-    const pageNode: PageNode = figma.createPage();
-    pageNode.name = "🤖 Optimized icons";
+    let pageNode: PageNode | undefined = figma.root
+      .findAllWithCriteria({
+        types: ["PAGE"],
+      })
+      .find((page) => page.name === "🤖 Optimized icons");
+    if (!pageNode) {
+      pageNode = figma.createPage();
+      pageNode.name = "🤖 Optimized icons";
+    }
     Object.entries(components)
       .sort(([componentNameA], [componentNameB]) =>
         componentNameA.localeCompare(componentNameB)
       )
       .forEach(([componentName, componentSizes], i) => {
-        const components: ComponentNode[] = Object.entries(componentSizes).map(
-          ([componentSize, componentData], j) => {
-            const component = figma.createComponent();
+        const components: ComponentNode[] = Object.entries(componentSizes)
+          // @ts-ignore
+          .sort(([csA], [csB]) => csA - csB)
+          .map(([componentSize, componentData], j) => {
+            let component: ComponentNode = figma.createComponent();
             const icon = figma.createNodeFromSvg(componentData);
             icon.children.forEach((child) => {
               (child as VectorNode).fillStyleId = msg.styleId;
@@ -100,18 +109,38 @@ figma.ui.onmessage = async (msg) => {
             component.resize(size, size);
             component.name = "size=" + size;
             component.appendChild(icon);
-            pageNode.appendChild(component);
+            (pageNode as PageNode).appendChild(component);
             return component;
-          }
-        );
+          });
 
-        const componentSet: ComponentSetNode = figma.combineAsVariants(
-          components,
-          pageNode
-        );
-        componentSet.name = componentName.substring(1);
-        componentSet.y = i * 30;
-        componentSet.layoutMode = "HORIZONTAL";
+        let componentSet: ComponentSetNode | undefined = figma.root
+          .findAllWithCriteria({
+            types: ["COMPONENT_SET"],
+          })
+          //@ts-ignore
+          .find((cs) => cs.name === componentName.substring(1));
+        if (!componentSet) {
+          componentSet = figma.combineAsVariants(
+            components,
+            pageNode as PageNode
+          );
+          componentSet.name = componentName.substring(1);
+          componentSet.y = i * 30;
+          componentSet.layoutMode = "HORIZONTAL";
+        } else {
+          // componentSet.children.forEach((child) => child.remove());
+
+          components.forEach((c, i) => {
+            const child = componentSet?.findChild(
+              (node) => node.name === c.name
+            );
+            componentSet?.insertChild(i, c);
+            if (child) {
+              child.remove();
+            }
+          });
+        }
+
         /*
         componentSet
           .getPublishStatusAsync()
