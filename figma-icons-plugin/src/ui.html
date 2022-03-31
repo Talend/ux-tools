@@ -5,13 +5,20 @@
 <script>
   window.onmessage = async (event) => {
     if (event.data.pluginMessage.type === "networkRequest") {
+      let status;
       const data = [];
-      for (const svg of event.data.pluginMessage.data) {
+      status = "LOADING";
+      console.log(status);
+      for await (const [
+        index,
+        svg,
+      ] of event.data.pluginMessage.data.entries()) {
         const formData = new FormData();
         const file = new Blob([svg.data], {
           type: "image/svg+xml",
         });
         formData.append("file", file);
+        status = "";
         const res = await fetch(
           `https://svg-optimizer.tools.dev.datapwn.com/process/${
             svg.size || "24"
@@ -23,8 +30,16 @@
         );
         const blob = await res.blob();
         const blobText = await blob.text();
-        data.push({ ...svg , data: blobText });
+        data.push({ ...svg, data: blobText });
+        status = "ONGOING";
+        console.log(
+          status,
+          index + 1 + "/" + event.data.pluginMessage.data.length
+        );
       }
+      status = "READY";
+      console.log(status);
+
       window.parent.postMessage(
         {
           pluginMessage: {
