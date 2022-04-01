@@ -1,24 +1,42 @@
 <h2>Process SVG</h2>
 
+<span id="text" style="display: none"></span>
+<progress id="progress" style="display: none"></progress>
+
 <div id="react-page"></div>
 
 <script>
   window.onmessage = async (event) => {
+
+    // DOM Elements helpers
+    const show = (element) => (element.style = undefined);
+    const hide = (element) => (element.style = "display: none");
+
+    // When network request is needed
     if (event.data.pluginMessage.type === "networkRequest") {
-      let status;
+
+      // DOM Elements to animate
+      const progress = document.getElementById("progress");
+      const text = document.getElementById("text");
+      const button = document.getElementById("create");
+
+      const icons = event.data.pluginMessage.data;
+      const styleId = event.data.pluginMessage.styleId;
+
+      // Init progress
+      const total = icons.length;
+      progress.max = total;
+      hide(button);
+      show(text);
+      text.innerText = `Warm up!`;
+
       const data = [];
-      status = "LOADING";
-      console.log(status);
-      for await (const [
-        index,
-        svg,
-      ] of event.data.pluginMessage.data.entries()) {
+      for await (const [index, svg] of icons.entries()) {
         const formData = new FormData();
         const file = new Blob([svg.data], {
           type: "image/svg+xml",
         });
         formData.append("file", file);
-        status = "";
         const res = await fetch(
           `https://svg-optimizer.tools.dev.datapwn.com/process/${
             svg.size || "24"
@@ -31,21 +49,29 @@
         const blob = await res.blob();
         const blobText = await blob.text();
         data.push({ ...svg, data: blobText });
-        status = "ONGOING";
-        console.log(
-          status,
-          index + 1 + "/" + event.data.pluginMessage.data.length
-        );
+
+        // Update status for each icon
+        progress.value = index + 1;
+        progress.innerText = `${((index + 1) * 100) / total}%`;
+        text.innerText = `${index + 1}/${total} icons`;
+        if (!index) {
+          show(progress);
+          text.className = "emoji hourglass";
+        }
       }
-      status = "READY";
-      console.log(status);
+
+      // Last status step
+      hide(progress);
+      text.className = undefined;
+      text.innerText = `👊 Done!`;
+      show(button);
 
       window.parent.postMessage(
         {
           pluginMessage: {
             type: "create-svg",
             data,
-            styleId: event.data.pluginMessage.styleId,
+            styleId,
           },
         },
         "*"
