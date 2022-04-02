@@ -1,0 +1,14 @@
+<h2>Gradient</h2>
+<p>Angle: <input id="angle" type="number" min="0" max="360" value="90"></p>
+<button id="cancel">Cancel</button>
+<button id="apply">Apply</button>
+<script>
+document.getElementById('apply').onclick = () => {
+  const input = document.getElementById('angle');
+  const angle = parseInt(input.value, 10);
+  parent.postMessage({ pluginMessage: { type: 'apply', angle } }, '*')
+}
+document.getElementById('cancel').onclick = () => {
+  parent.postMessage({ pluginMessage: { type: 'cancel' } }, '*')
+}
+</script>
