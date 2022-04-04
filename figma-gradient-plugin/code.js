@@ -25,25 +25,28 @@ figma.ui.onmessage = (msg) => __awaiter(this, void 0, void 0, function* () {
             return;
         }
         for (const node of figma.currentPage.selection) {
-            if ("fillStyleId" in node) {
-                // @ts-ignore
+            const newGradientTransform = transformAngleToFigmaTransformation((parseFloat(msg.angle) / 180) * Math.PI);
+            console.log(node);
+            if ("fillStyleId" in node && node.fillStyleId) {
+                // it's a global style (design-token)
                 const paintStyle = figma
                     .getLocalPaintStyles()
                     .find((s) => s.id === node.fillStyleId);
                 const gradient = paintStyle;
-                const newGradientTransform = transformAngleToFigmaTransformation((parseFloat(msg.angle) / 180) * Math.PI);
-                // @ts-ignore
                 gradient.paints = [
                     Object.assign(Object.assign({}, gradient.paints[0]), { gradientTransform: newGradientTransform }),
                 ];
-                console.log({
-                    figma,
-                    paintStyle,
-                    gradient,
-                });
+            }
+            else {
+                // it's a local style
+                if ("fills" in node && node.fills) {
+                    const gradient = node.fills[0];
+                    node.fills = [
+                        Object.assign(Object.assign({}, gradient), { gradientTransform: newGradientTransform }),
+                    ];
+                }
             }
         }
-        figma.viewport.scrollAndZoomIntoView(figma.currentPage.selection);
     }
     if (msg.type === "cancel") {
         figma.closePlugin();

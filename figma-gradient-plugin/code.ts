@@ -18,23 +18,32 @@ figma.ui.onmessage = async (msg) => {
       return;
     }
     for (const node of figma.currentPage.selection) {
-      if ("fillStyleId" in node) {
-        // @ts-ignore
+      const newGradientTransform = transformAngleToFigmaTransformation(
+        (parseFloat(msg.angle) / 180) * Math.PI
+      );
+      if ("fillStyleId" in node && node.fillStyleId) {
+        // it's a global style (aka design-token)
         const paintStyle = figma
           .getLocalPaintStyles()
           .find((s) => s.id === node.fillStyleId);
         const gradient = paintStyle as PaintStyle;
-        const newGradientTransform = transformAngleToFigmaTransformation(
-          (parseFloat(msg.angle) / 180) * Math.PI
-        );
-        // @ts-ignore
         gradient.paints = [
           // @ts-ignore
           { ...gradient.paints[0], gradientTransform: newGradientTransform },
         ];
+      } else {
+        // it's a local style
+        if ("fills" in node && node.fills) {
+          const gradient = node.fills[0];
+          node.fills = [
+            {
+              ...gradient,
+              gradientTransform: newGradientTransform,
+            },
+          ];
+        }
       }
     }
-    figma.viewport.scrollAndZoomIntoView(figma.currentPage.selection);
   }
   if (msg.type === "cancel") {
     figma.closePlugin();
