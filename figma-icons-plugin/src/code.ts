@@ -102,6 +102,7 @@ figma.ui.onmessage = async (msg) => {
   if (msg.type === "create-svg") {
     let names: string[] = [];
     const sizes: number[] = [];
+    // Only icons that we asked to modify
     const components: { [name: string]: { [size: number]: string } } = {};
     for (const { name, size, data } of msg.data) {
       if (!components[name]) {
@@ -122,6 +123,7 @@ figma.ui.onmessage = async (msg) => {
       pageNode.name = PAGE_NAME;
       names = Object.keys(components).map(getPublicComponentName);
     } else {
+      // All available icon names in the page
       names = pageNode
         .findAllWithCriteria({ types: ["COMPONENT"] })
         .filter((componentNode) => !componentNode.name.startsWith("_"))
@@ -164,7 +166,7 @@ figma.ui.onmessage = async (msg) => {
             // Flatten vectors
             figma.flatten(icon.children, icon);
             if (publicComponent) {
-              // Update existing component if its content has changed
+              // Update existing public component if its content has changed
               const child = publicComponent.children[0];
               const beforeCheckSum = checksum(child);
               const afterCheckSum = checksum(icon);
@@ -191,5 +193,14 @@ figma.ui.onmessage = async (msg) => {
             publicComponent.y = sortedNames.indexOf(name) * (biggestSize + 10);
           });
       });
+    const publicComponents: ComponentNode[] = pageNode.findAllWithCriteria({
+      types: ["COMPONENT"],
+    });
+    publicComponents.forEach((publicComponent) => {
+      const [, size, name] = publicComponent.name.split("/");
+      publicComponent.x =
+        sortedSizes.indexOf(parseInt(size)) * (biggestSize + 10);
+      publicComponent.y = sortedNames.indexOf(name) * (biggestSize + 10);
+    });
   }
 };
