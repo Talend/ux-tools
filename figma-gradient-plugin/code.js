@@ -26,9 +26,8 @@ figma.ui.onmessage = (msg) => __awaiter(this, void 0, void 0, function* () {
         }
         for (const node of figma.currentPage.selection) {
             const newGradientTransform = transformAngleToFigmaTransformation((parseFloat(msg.angle) / 180) * Math.PI);
-            console.log(node);
             if ("fillStyleId" in node && node.fillStyleId) {
-                // it's a global style (design-token)
+                // it's a global style (aka design-token)
                 const paintStyle = figma
                     .getLocalPaintStyles()
                     .find((s) => s.id === node.fillStyleId);
