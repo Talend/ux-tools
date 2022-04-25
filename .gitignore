@@ -4,3 +4,5 @@ figma
 lib
 node_modules
 output
+*.log
+.DS_Store
