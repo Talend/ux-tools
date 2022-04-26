@@ -1,0 +1,11 @@
+{
+  "name": "Talend Changelog",
+  "id": "1100401517031954168",
+  "api": "1.0.0",
+  "editorType": [
+    "figma"
+  ],
+  "enablePrivatePluginApi": true,
+  "main": "dist/code.js",
+  "ui": "dist/ui.html"
+}

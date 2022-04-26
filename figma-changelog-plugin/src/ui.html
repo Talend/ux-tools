@@ -1,0 +1,38 @@
+<h2>Changelog generator</h2>
+<button id="create">Create</button>
+<button id="cancel">Cancel</button>
+
+<div id="react-page"></div>
+
+<script>
+const getVersionHistory = async (fileKey) => {
+    const request = new XMLHttpRequest();
+    request.open(
+        "GET",
+        `https://api.figma.com/v1/files/${fileKey}/versions`
+    );
+    request.setRequestHeader("X-FIGMA-TOKEN", "370887-1fe1f21d-a423-4ef2-acfc-36d96b95b76a");
+    request.responseType = "json";
+    request.onload = () => {
+        const response = request.response;
+        console.log(response);
+        window.parent.postMessage(
+            {
+                pluginMessage: {
+                    type: "set-history",
+                    value: response.versions
+                }
+            },
+            "*"
+        );
+    };
+    request.send();
+};
+
+window.onmessage = async (event) => {
+    if (event.data.pluginMessage.type === 'get-changelog') {
+        await getVersionHistory(event.data.pluginMessage.fileKey);
+    }
+}
+
+</script>
