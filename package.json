@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@talend/design-tokens": "^2.1.0"
+  }
+}
