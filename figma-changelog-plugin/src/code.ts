@@ -1,5 +1,5 @@
-import * as ChangelogRequest from "./changelog-request";
-import * as SetHistory from "./set-history";
+import * as FetchVersionHistory from "./fetch-version-history";
+import * as DisplayHistory from "./display-version-history";
 import * as AddHistory from "./add-history";
 
 // This plugin will open a window to prompt the user to enter a number, and
@@ -10,7 +10,7 @@ import * as AddHistory from "./add-history";
 // full browser environment (see documentation).
 
 // This shows the HTML page in "ui.html".
-figma.showUI(__html__);
+figma.showUI(__html__, { width: 360, height: 280 });
 
 // Calls to "parent.postMessage" from within the HTML page will trigger this
 // callback. The callback will be passed the "pluginMessage" property of the
@@ -18,12 +18,12 @@ figma.showUI(__html__);
 figma.ui.onmessage = async (msg) => {
   // One way of distinguishing between different types of messages sent from
   // your HTML page is to use an object with a "type" property like this.
-  if (msg.type === ChangelogRequest.messageName) {
-    ChangelogRequest.handleRequest();
+  if (msg.type === FetchVersionHistory.messageName) {
+    FetchVersionHistory.handleRequest({ createPage: false });
   }
 
-  if (msg.type === SetHistory.messageName) {
-    await SetHistory.handleEvent(msg);
+  if (msg.type === DisplayHistory.messageName) {
+    await DisplayHistory.handleEvent(msg);
   }
 
   if (msg.type === AddHistory.messageName) {

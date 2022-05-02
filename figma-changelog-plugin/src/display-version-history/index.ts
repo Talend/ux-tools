@@ -5,17 +5,11 @@ import * as ArrayFP from "fp-ts/Array";
 
 import * as Tokens from "../tokens";
 
-type Version = {
+export type Version = {
   created_at: string;
+  id: string;
   description?: string;
-  id: string;
   label?: string;
-};
-type Log = {
-  created_at: string;
-  description: string;
-  id: string;
-  label: string;
   user: { handle: string; img_url: string; id: string };
 };
 
@@ -25,10 +19,13 @@ const CHANGELOG_FRAME = "Changelog";
 export const messageName = "set-history";
 
 function prefixWith0(value: number) {
-  return value > 10 ? value : `0${value}`;
+  return value >= 10 ? value : `0${value}`;
 }
 
-export async function handleEvent(msg: { type: string; value: Log[] }) {
+export async function handleEvent(msg: {
+  type: string;
+  historyLogs: Version[];
+}) {
   const { fileKey } = figma;
   const pageNode: PageNode | undefined = figma.root
     .findAllWithCriteria({
@@ -36,11 +33,12 @@ export async function handleEvent(msg: { type: string; value: Log[] }) {
     })
     .find((page) => page.name === CHANGELOG_PAGE_NAME);
 
-  const versions: OptionFP.Option<NonEmptyArrayFP.NonEmptyArray<Log>> = pipe(
-    msg.value,
-    ArrayFP.filter<Log>((value: Version) => !!value.label),
-    NonEmptyArrayFP.fromArray
-  );
+  const versions: OptionFP.Option<NonEmptyArrayFP.NonEmptyArray<Version>> =
+    pipe(
+      msg.historyLogs,
+      ArrayFP.filter<Version>((value: Version) => !!value.label),
+      NonEmptyArrayFP.fromArray
+    );
 
   // Colors and styles from token package
   const headerStyleID = pipe(
@@ -106,7 +104,10 @@ export async function handleEvent(msg: { type: string; value: Log[] }) {
     pipe(
       versions,
       OptionFP.fold(
-        () => figma.closePlugin(),
+        () => {
+          figma.ui.postMessage({ type: "page-created" });
+          figma.closePlugin();
+        },
         (logs) => {
           // Create or locate changelog page
           const changelogPage = pipe(
@@ -138,7 +139,7 @@ export async function handleEvent(msg: { type: string; value: Log[] }) {
           logShell.horizontalPadding = 16;
           logShell.cornerRadius = 4;
           logShell.itemSpacing = 16;
-          logShell.resizeWithoutConstraints(600, 300);
+          logShell.resizeWithoutConstraints(480, 300);
           changelogPage.appendChild(logShell);
 
           pipe(
@@ -160,7 +161,7 @@ export async function handleEvent(msg: { type: string; value: Log[] }) {
               title.fillStyleId = neutralTextColor.id;
               title.layoutAlign = "STRETCH";
               title.name = "title";
-              title.characters = version.label;
+              title.characters = version.label || "New version";
               title.textAutoResize = "WIDTH_AND_HEIGHT";
               title.locked = true;
 
@@ -169,7 +170,8 @@ export async function handleEvent(msg: { type: string; value: Log[] }) {
               description.fillStyleId = neutralTextColor.id;
               description.layoutAlign = "STRETCH";
               description.name = "description";
-              description.characters = version.description;
+              description.characters =
+                version.description || "No description provided";
               description.textAutoResize = "WIDTH_AND_HEIGHT";
               description.locked = true;
 
@@ -212,7 +214,9 @@ export async function handleEvent(msg: { type: string; value: Log[] }) {
             })
           );
 
-          figma.closePlugin();
+          figma.viewport.scrollAndZoomIntoView([logShell]);
+
+          figma.ui.postMessage({ type: "page-created" });
         }
       )
     );

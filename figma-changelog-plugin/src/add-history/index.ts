@@ -1,4 +1,4 @@
-import * as ChangelogRequest from "../changelog-request";
+import * as FetchVersionHistory from "../fetch-version-history";
 
 export const messageName = "add-history";
 
@@ -9,5 +9,5 @@ export async function handleEvent(msg: {
   const { data } = msg;
   await Promise.all([
     figma.saveVersionHistoryAsync(data.label, data.description),
-  ]).then(() => ChangelogRequest.handleRequest());
+  ]).then(() => FetchVersionHistory.handleRequest({ createPage: true }));
 }
