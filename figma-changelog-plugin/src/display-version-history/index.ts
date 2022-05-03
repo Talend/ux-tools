@@ -2,7 +2,9 @@ import * as OptionFP from "fp-ts/Option";
 import * as NonEmptyArrayFP from "fp-ts/NonEmptyArray";
 import { pipe } from "fp-ts/function";
 import * as ArrayFP from "fp-ts/Array";
+import * as StringFP from "fp-ts/string";
 
+import { format } from "date-fns";
 import * as Tokens from "../tokens";
 
 export type Version = {
@@ -18,8 +20,17 @@ const CHANGELOG_FRAME = "Changelog";
 
 export const messageName = "set-history";
 
-function prefixWith0(value: number) {
-  return value >= 10 ? value : `0${value}`;
+function getDateUTC(date: string): string {
+  return pipe(date, StringFP.split("T"), (array) => {
+    const dateDay = array[0].split("-");
+    const JSDate = new Date(
+      parseFloat(dateDay[0]),
+      parseFloat(dateDay[1]) - 1,
+      parseFloat(dateDay[2])
+    );
+
+    return format(JSDate, "dd LLL yyyy");
+  });
 }
 
 export async function handleEvent(msg: {
@@ -71,6 +82,24 @@ export async function handleEvent(msg: {
     (array) => array[0].id,
     (id) => id.replace("S:", "").replace(",", "")
   );
+  const accentFillColor = pipe(
+    Tokens.fillTokens,
+    ArrayFP.filter((token) => token.name === "coralColorAccentText"),
+    (array) => array[0].id,
+    (id) => id.replace("S:", "").replace(",", "")
+  );
+  const paragraphSmallBoldStyleID = pipe(
+    Tokens.fontTokens,
+    ArrayFP.filter((token) => token.name === "coralParagraphSBold"),
+    (array) => array[0].id,
+    (id) => id.replace("S:", "").replace(",", "")
+  );
+  const borderWeakStyleID = pipe(
+    Tokens.fillTokens,
+    ArrayFP.filter((token) => token.name === "coralColorNeutralBorderWeak"),
+    (array) => array[0].id,
+    (id) => id.replace("S:", "").replace(",", "")
+  );
 
   // Get the styles from the tokens (async)
   await Promise.all([
@@ -87,6 +116,9 @@ export async function handleEvent(msg: {
     figma.importStyleByKeyAsync(paragraphSmallStyleID),
     figma.importStyleByKeyAsync(neutralFillColor),
     figma.importStyleByKeyAsync(neutralWeakFillColor),
+    figma.importStyleByKeyAsync(accentFillColor),
+    figma.importStyleByKeyAsync(paragraphSmallBoldStyleID),
+    figma.importStyleByKeyAsync(borderWeakStyleID),
   ]).then((results) => {
     const [
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -98,6 +130,9 @@ export async function handleEvent(msg: {
       paragraphSmallStyle,
       neutralTextColor,
       neutralWeakTextColor,
+      accentTextColor,
+      paragraphSmallStyleBold,
+      borderWeakColor,
     ] = results;
 
     // Actual element tree construction
@@ -138,23 +173,90 @@ export async function handleEvent(msg: {
           logShell.verticalPadding = 16;
           logShell.horizontalPadding = 16;
           logShell.cornerRadius = 4;
-          logShell.itemSpacing = 16;
+          logShell.itemSpacing = 0;
           logShell.resizeWithoutConstraints(480, 300);
           changelogPage.appendChild(logShell);
 
           pipe(
             logs,
             ArrayFP.map(async (version) => {
-              const date = new Date(version.created_at);
-              const hours = date.getHours();
-              const minutes = date.getMinutes();
+              const date = getDateUTC(version.created_at);
 
-              const logEntry = figma.createFrame();
+              const shell = figma.createFrame();
+              shell.name = version.created_at;
+              shell.layoutMode = "HORIZONTAL";
+              shell.layoutAlign = "STRETCH";
+              shell.primaryAxisSizingMode = "FIXED";
+              shell.counterAxisSizingMode = "AUTO";
+              shell.locked = true;
+              shell.itemSpacing = 8;
+              shell.counterAxisAlignItems = "MIN";
+              shell.primaryAxisAlignItems = "MIN";
+              logShell.appendChild(shell);
+
+              /* const logEntry = figma.createFrame();
               logEntry.name = version.created_at;
               logEntry.layoutMode = "VERTICAL";
               logEntry.layoutAlign = "STRETCH";
               logEntry.locked = true;
-              logShell.appendChild(logEntry);
+              logShell.appendChild(logEntry); */
+
+              const timeStamp = figma.createText();
+              timeStamp.textStyleId = paragraphSmallStyleBold.id;
+              timeStamp.fillStyleId = neutralWeakTextColor.id;
+              timeStamp.name = "timestamp";
+              timeStamp.characters = date;
+              timeStamp.textAutoResize = "WIDTH_AND_HEIGHT";
+              timeStamp.locked = true;
+              timeStamp.resizeWithoutConstraints(65, 18);
+              shell.appendChild(timeStamp);
+
+              const decoration = figma.createFrame();
+              decoration.name = "decoration";
+              decoration.layoutMode = "VERTICAL";
+              decoration.locked = true;
+              decoration.itemSpacing = 0;
+              decoration.layoutAlign = "STRETCH";
+              decoration.primaryAxisSizingMode = "FIXED";
+              decoration.counterAxisSizingMode = "AUTO";
+              decoration.counterAxisAlignItems = "CENTER";
+              decoration.primaryAxisAlignItems = "MIN";
+              shell.appendChild(decoration);
+
+              const line1 = figma.createLine();
+              line1.name = "line";
+              line1.fillStyleId = accentTextColor.id;
+              line1.resizeWithoutConstraints(4, 0);
+              line1.rotation = 90;
+              line1.strokeStyleId = borderWeakColor.id;
+              decoration.appendChild(line1);
+
+              const dot = figma.createEllipse();
+              dot.name = "dot";
+              dot.fillStyleId = accentTextColor.id;
+              dot.resizeWithoutConstraints(12, 12);
+              decoration.appendChild(dot);
+
+              const line = figma.createLine();
+              line.name = "line";
+              line.fillStyleId = accentTextColor.id;
+              line.resizeWithoutConstraints(1, 0);
+              // line.layoutAlign = "STRETCH";
+              line.layoutGrow = 1;
+              line.rotation = 90;
+              line.strokeStyleId = borderWeakColor.id;
+              decoration.appendChild(line);
+
+              const data = figma.createFrame();
+              data.name = "data";
+              data.layoutMode = "VERTICAL";
+              data.layoutGrow = 1;
+              data.locked = true;
+              data.itemSpacing = 4;
+              data.paddingBottom = 32;
+              // data.primaryAxisSizingMode = "FIXED";
+              // data.counterAxisSizingMode = "AUTO";
+              shell.appendChild(data);
 
               const title = figma.createText();
               title.textStyleId = headerStyle.id;
@@ -180,13 +282,7 @@ export async function handleEvent(msg: {
               createdBy.fillStyleId = neutralWeakTextColor.id;
               createdBy.layoutAlign = "STRETCH";
               createdBy.name = "createdBy";
-              createdBy.characters = `Created by ${
-                version.user.handle
-              } on ${prefixWith0(date.getMonth())}/${prefixWith0(
-                date.getDay()
-              )}/${date.getFullYear()} at ${prefixWith0(hours)}:${prefixWith0(
-                minutes
-              )}`;
+              createdBy.characters = `Created by ${version.user.handle}`;
               createdBy.textAutoResize = "WIDTH_AND_HEIGHT";
               createdBy.locked = true;
 
@@ -195,11 +291,11 @@ export async function handleEvent(msg: {
                 " ",
                 "-"
               )}?version-id=${version.id}`;
-              link.fillStyleId = neutralWeakTextColor.id;
-              link.textStyleId = paragraphSmallStyle.id;
+              link.fillStyleId = accentTextColor.id;
+              link.textStyleId = paragraphSmallStyleBold.id;
               link.layoutAlign = "STRETCH";
               link.name = "linkToVersion";
-              link.characters = "Go to version";
+              link.characters = `Go to version "${version.label}"`;
               link.textAutoResize = "WIDTH_AND_HEIGHT";
               link.hyperlink = {
                 type: "URL",
@@ -207,10 +303,10 @@ export async function handleEvent(msg: {
               };
               link.locked = true;
 
-              logEntry.appendChild(title);
-              logEntry.appendChild(description);
-              logEntry.appendChild(createdBy);
-              logEntry.appendChild(link);
+              data.appendChild(title);
+              data.appendChild(description);
+              data.appendChild(createdBy);
+              data.appendChild(link);
             })
           );
 
