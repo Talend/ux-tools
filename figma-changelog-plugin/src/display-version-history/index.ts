@@ -100,6 +100,12 @@ export async function handleEvent(msg: {
     (array) => array[0].id,
     (id) => id.replace("S:", "").replace(",", "")
   );
+  const neutralBackgroundID = pipe(
+    Tokens.fillTokens,
+    ArrayFP.filter((token) => token.name === "coralColorNeutralBackground"),
+    (array) => array[0].id,
+    (id) => id.replace("S:", "").replace(",", "")
+  );
 
   // Get the styles from the tokens (async)
   await Promise.all([
@@ -119,6 +125,7 @@ export async function handleEvent(msg: {
     figma.importStyleByKeyAsync(accentFillColor),
     figma.importStyleByKeyAsync(paragraphSmallBoldStyleID),
     figma.importStyleByKeyAsync(borderWeakStyleID),
+    figma.importStyleByKeyAsync(neutralBackgroundID),
   ]).then((results) => {
     const [
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -133,6 +140,7 @@ export async function handleEvent(msg: {
       accentTextColor,
       paragraphSmallStyleBold,
       borderWeakColor,
+      backgroundNeutral,
     ] = results;
 
     // Actual element tree construction
@@ -175,12 +183,15 @@ export async function handleEvent(msg: {
           logShell.cornerRadius = 4;
           logShell.itemSpacing = 0;
           logShell.resizeWithoutConstraints(480, 300);
+          logShell.fillStyleId = backgroundNeutral.id;
           changelogPage.appendChild(logShell);
 
           pipe(
             logs,
             ArrayFP.map(async (version) => {
               const date = getDateUTC(version.created_at);
+              const isManual =
+                version.label && version.label.match(/(v)(\d)(\.\d)*/g);
 
               const shell = figma.createFrame();
               shell.name = version.created_at;
@@ -231,11 +242,22 @@ export async function handleEvent(msg: {
               line1.strokeStyleId = borderWeakColor.id;
               decoration.appendChild(line1);
 
-              const dot = figma.createEllipse();
-              dot.name = "dot";
-              dot.fillStyleId = accentTextColor.id;
-              dot.resizeWithoutConstraints(12, 12);
-              decoration.appendChild(dot);
+              if (isManual) {
+                const dot = figma.createEllipse();
+                dot.name = "dot";
+                dot.fillStyleId = accentTextColor.id;
+                dot.resizeWithoutConstraints(12, 12);
+                decoration.appendChild(dot);
+              } else {
+                const dot = figma.createEllipse();
+                dot.name = "dot";
+                dot.fillStyleId = accentTextColor.id;
+                dot.resizeWithoutConstraints(12, 12);
+                dot.strokeStyleId = backgroundNeutral.id;
+                dot.strokeWeight = 4;
+                dot.strokeAlign = "INSIDE";
+                decoration.appendChild(dot);
+              }
 
               const line = figma.createLine();
               line.name = "line";
@@ -253,14 +275,14 @@ export async function handleEvent(msg: {
               data.layoutGrow = 1;
               data.locked = true;
               data.itemSpacing = 4;
-              data.paddingBottom = 32;
-              // data.primaryAxisSizingMode = "FIXED";
-              // data.counterAxisSizingMode = "AUTO";
+              data.paddingBottom = isManual ? 32 : 16;
               shell.appendChild(data);
 
               const title = figma.createText();
               title.textStyleId = headerStyle.id;
-              title.fillStyleId = neutralTextColor.id;
+              title.fillStyleId = isManual
+                ? neutralTextColor.id
+                : neutralWeakTextColor.id;
               title.layoutAlign = "STRETCH";
               title.name = "title";
               title.characters = version.label || "New version";
@@ -282,7 +304,9 @@ export async function handleEvent(msg: {
               createdBy.fillStyleId = neutralWeakTextColor.id;
               createdBy.layoutAlign = "STRETCH";
               createdBy.name = "createdBy";
-              createdBy.characters = `Created by ${version.user.handle}`;
+              createdBy.characters = `Created by ${version.user.handle}${
+                !isManual ? " from a Figma action 🤖" : ""
+              }`;
               createdBy.textAutoResize = "WIDTH_AND_HEIGHT";
               createdBy.locked = true;
 
@@ -304,9 +328,17 @@ export async function handleEvent(msg: {
               link.locked = true;
 
               data.appendChild(title);
-              data.appendChild(description);
+              if (version.description) {
+                data.appendChild(description);
+              } else {
+                description.remove();
+              }
               data.appendChild(createdBy);
-              data.appendChild(link);
+              if (isManual) {
+                data.appendChild(link);
+              } else {
+                link.remove();
+              }
             })
           );
 
