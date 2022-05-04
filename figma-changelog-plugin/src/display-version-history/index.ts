@@ -191,7 +191,8 @@ export async function handleEvent(msg: {
             ArrayFP.map(async (version) => {
               const date = getDateUTC(version.created_at);
               const isManual =
-                version.label && version.label.match(/(v)(\d)(\.\d)*/g);
+                version.label &&
+                version.label.toLocaleLowerCase().match(/(v)(\d)(\.\d)*/g);
 
               const shell = figma.createFrame();
               shell.name = version.created_at;
