@@ -1,0 +1,173 @@
+@use "~@talend/design-tokens/lib/tokens";
+
+html {
+  font-size: 62.5%;
+  box-sizing: border-box;
+  color: tokens.$coral-color-neutral-text;
+}
+
+body {
+  margin: 0;
+  padding: tokens.$coral-spacing-s;
+}
+
+* {
+  font: tokens.$coral-paragraph-m;
+}
+
+.stackVertical {
+  display: flex;
+  flex-flow: column;
+  justify-content: stretch;
+  align-items: stretch;
+  gap: tokens.$coral-spacing-s;
+
+  &_xsmall {
+    gap: tokens.$coral-spacing-xs;
+  }
+
+  &_xxsmall {
+    gap: tokens.$coral-spacing-xxs;
+  }
+}
+
+
+.stackHorizontal {
+  display: flex;
+  flex-flow: row;
+  justify-content: space-between;
+  align-items: center;
+  gap: tokens.$coral-spacing-s;
+
+  &_xsmall {
+    gap: tokens.$coral-spacing-xs;
+  }
+}
+
+.title {
+  font: tokens.$coral-heading-m;
+  margin: 0;
+}
+
+.currentVersion {
+  padding: 0;
+  margin: 0;
+  font: tokens.$coral-paragraph-s-bold;
+  color: tokens.$coral-color-neutral-text-weak;
+}
+
+.label {
+  font: tokens.$coral-paragraph-s-bold;
+  color: tokens.$coral-color-neutral-text;
+  margin: 0;
+}
+
+.error {
+  font: tokens.$coral-paragraph-s;
+  margin: 0;
+  color: tokens.$coral-color-danger-text;
+}
+
+.fieldset {
+  padding: 0;
+  border: 0;
+  margin: 0;
+}
+
+.form {
+  padding: 0;
+  border: 0;
+  margin: 0;
+}
+
+input, textarea {
+  border: 1px solid tokens.$coral-color-neutral-border;
+  transition: tokens.$coral-transition-fast;
+  padding: tokens.$coral-spacing-xs;
+  font: tokens.$coral-paragraph-m;
+  border-radius: tokens.$coral-radius-s;
+
+  &:hover {
+    border: 1px solid tokens.$coral-color-neutral-border-strong-hover;
+  }
+
+  &:focus {
+    border: 1px solid tokens.$coral-color-accent-border;
+    box-shadow: 0 0 0 1px tokens.$coral-color-accent-border;
+    outline: 0;
+  }
+
+  &.inputError {
+    border-color: tokens.$coral-color-danger-border;
+
+    &:focus {
+      box-shadow: 0 0 0 1px tokens.$coral-color-danger-border;
+    }
+  }
+}
+
+textarea {
+  resize: vertical;
+}
+
+.button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font: tokens.$coral-paragraph-m-bold;
+  border-radius: tokens.$coral-radius-s;
+  cursor: pointer;
+  border: 0;
+  background: transparent;
+  height: tokens.$coral-sizing-s;
+  padding: tokens.$coral-spacing-xxs tokens.$coral-spacing-xs;
+
+  &_primary {
+    color: tokens.$coral-color-accent-text-weak;
+    background: tokens.$coral-color-accent-background-strong;
+
+    &:hover {
+      color: tokens.$coral-color-accent-text-weak-hover;
+      background: tokens.$coral-color-accent-background-strong-hover;
+    }
+
+    &:active {
+      color: tokens.$coral-color-accent-text-weak-active;
+      background: tokens.$coral-color-accent-background-strong-active;
+    }
+
+    &:disabled,
+    &[aria-disabled='true'],
+    &[aria-busy='true'] {
+      color: tokens.$coral-color-neutral-text-disabled;
+      background: tokens.$coral-color-neutral-background-disabled;
+    }
+  }
+
+  &_secondary {
+    color: tokens.$coral-color-accent-text;
+    border: tokens.$coral-border-s-solid tokens.$coral-color-accent-border;
+
+    &:hover {
+      color: tokens.$coral-color-accent-text-strong-hover;
+      border: tokens.$coral-border-s-solid tokens.$coral-color-accent-border-hover;
+      background: tokens.$coral-color-accent-background-weak-hover;
+    }
+
+    &:active {
+      color: tokens.$coral-color-accent-text-strong-active;
+      border: tokens.$coral-border-s-solid tokens.$coral-color-accent-border-active;
+      background: tokens.$coral-color-accent-background-weak-active;
+    }
+
+    &:disabled,
+    &[aria-disabled='true'],
+    &[aria-busy='true'] {
+      background: transparent;
+      color: tokens.$coral-color-neutral-text-disabled;
+      border: tokens.$coral-border-s-solid tokens.$coral-color-neutral-border-disabled;
+    }
+  }
+}
+

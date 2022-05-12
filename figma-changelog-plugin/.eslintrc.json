@@ -1,0 +1,19 @@
+{
+  "extends": "airbnb-typescript-prettier",
+  "rules": {
+    "import/prefer-default-export": "off",
+    "import/no-unresolved": "off",
+    "react/require-default-props": "off",
+    "react/jsx-props-no-spreading": "off",
+    "react/react-in-jsx-scope": "off",
+    "@typescript-eslint/no-explicit-any": "error",
+    "default-case": "off",
+    "no-console": "error",
+    "import/no-extraneous-dependencies": [
+      "error",
+      {
+        "devDependencies": ["**/*.test.ts", "**/*.test.tsx", "**/*.stories.tsx"]
+      }
+    ]
+  }
+}
