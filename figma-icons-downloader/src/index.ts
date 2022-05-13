@@ -21,6 +21,20 @@ const client = Figma.Client({
 });
 
 (async () => {
+  async function replaceInFile(
+    filename: fs.PathLike,
+    searchValue: RegExp,
+    replacement: string
+  ) {
+    try {
+      const contents = await fsPromises.readFile(filename, "utf-8");
+      const replaced = contents.replace(searchValue, replacement);
+      await fsPromises.writeFile(filename, replaced);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
   const { data: me } = await client.me();
   console.log("Hello, " + me.handle + "!");
 
@@ -73,6 +87,7 @@ const client = Figma.Client({
         const imagePromiseResponse = await fetch(imageUrl);
         const file = await imagePromiseResponse.buffer();
         await fsPromises.writeFile(filePath, file);
+        await replaceInFile(filePath, /#202020/gi, "currentColor");
       }
     }
   }
