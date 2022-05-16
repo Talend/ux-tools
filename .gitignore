@@ -2,6 +2,7 @@
 dist
 figma
 lib
+bin
 node_modules
 output
 *.log
