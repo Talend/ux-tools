@@ -11,15 +11,6 @@
     const show = (element) => (element.style = undefined);
     const hide = (element) => (element.style = "display: none");
 
-    function sliceIntoChunks(array, chunkSize) {
-      const results = [];
-      for (let i = 0; i < array.length; i += chunkSize) {
-        const chunk = array.slice(i, i + chunkSize);
-        results.push(chunk);
-      }
-      return results;
-    }
-
     // When network request is needed
     if (event.data.pluginMessage.type === "networkRequest") {
       // DOM Elements to animate
