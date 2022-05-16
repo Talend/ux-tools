@@ -25,7 +25,8 @@
       // DOM Elements to animate
       const progress = document.getElementById("progress");
       const text = document.getElementById("text");
-      const button = document.getElementById("create");
+      const reorganizeButton = document.getElementById("reorganize");
+      const createButton = document.getElementById("create");
 
       const icons = event.data.pluginMessage.data;
       const styleId = event.data.pluginMessage.styleId;
@@ -33,39 +34,38 @@
       // Init progress
       const total = icons.length;
       progress.max = total;
-      hide(button);
+      hide(reorganizeButton);
+      hide(createButton);
       show(text);
       text.innerText = `Warm up!`;
 
       const data = [];
-      for (const iconsChunk of sliceIntoChunks(icons, 200)) {
-        for await (const [index, svg] of iconsChunk.entries()) {
-          const formData = new FormData();
-          const file = new Blob([svg.data], {
-            type: "image/svg+xml",
-          });
-          formData.append("file", file);
-          const res = await fetch(
-            `https://svg-optimizer.tools.dev.datapwn.com/process/${
-              svg.size || "24"
-            }`,
-            {
-              method: "POST",
-              body: formData,
-            }
-          );
-          const blob = await res.blob();
-          const blobText = await blob.text();
-          data.push({ ...svg, data: blobText });
-
-          // Update status for each icon
-          progress.value = index + 1;
-          progress.innerText = `${((index + 1) * 100) / total}%`;
-          text.innerText = `${index + 1}/${total} icons`;
-          if (!index) {
-            show(progress);
-            text.className = "emoji hourglass";
+      for await (const [index, svg] of icons.entries()) {
+        const formData = new FormData();
+        const file = new Blob([svg.data], {
+          type: "image/svg+xml",
+        });
+        formData.append("file", file);
+        const res = await fetch(
+          `https://svg-optimizer.tools.dev.datapwn.com/process/${
+            svg.size || "24"
+          }`,
+          {
+            method: "POST",
+            body: formData,
           }
+        );
+        const blob = await res.blob();
+        const blobText = await blob.text();
+        data.push({ ...svg, data: blobText });
+
+        // Update status for each icon
+        progress.value = index + 1;
+        progress.innerText = `${((index + 1) * 100) / total}%`;
+        text.innerText = `${index + 1}/${total} icons`;
+        if (!index) {
+          show(progress);
+          text.className = "emoji hourglass";
         }
       }
 
@@ -73,7 +73,8 @@
       hide(progress);
       text.className = undefined;
       text.innerText = `👊 Done!`;
-      show(button);
+      show(reorganizeButton);
+      show(createButton);
 
       window.parent.postMessage(
         {

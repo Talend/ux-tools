@@ -79,6 +79,7 @@ async function sendSVG(nodes: SceneNode[]) {
   });
 }
 
+const STASH_MARGIN = 200;
 function reorganize() {
   const start = new Date();
   console.log("Start reorganizing icons");
@@ -91,11 +92,6 @@ function reorganize() {
     const publicComponents: ComponentNode[] = pageNode.findAllWithCriteria({
       types: ["COMPONENT"],
     });
-    const sortedNames: string[] = [
-      ...new Set(
-        publicComponents.map((component) => component.name.split("/")[2])
-      ),
-    ].sort();
     let sizes: number[] = [];
     publicComponents.forEach((publicComponent) => {
       const [, size] = publicComponent.name.split("/");
@@ -109,30 +105,41 @@ function reorganize() {
     const componentSets = figma.root.findAllWithCriteria({
       types: ["COMPONENT_SET"],
     });
-    publicComponents
-      .filter((publicComponent) => {
-        const [, , name] = publicComponent.name.split("/");
-        return componentSets.find((cs) => cs.name === `_${name}`);
-      })
-      .forEach((publicComponent, index) => {
-        const [, size, name] = publicComponent.name.split("/");
-        publicComponent.x =
-          sortedSizes.indexOf(parseInt(size)) * (biggestSize + 10);
-        publicComponent.y = sortedNames.indexOf(name) * (biggestSize + 10);
-        publicComponent.locked = true;
-      });
-    publicComponents
-      .filter((publicComponent) => {
-        const [, , name] = publicComponent.name.split("/");
-        return !componentSets.find((cs) => cs.name === `_${name}`);
-      })
-      .forEach((publicComponent) => {
-        const [, size, name] = publicComponent.name.split("/");
-        publicComponent.x =
-          sortedSizes.indexOf(parseInt(size)) * (biggestSize + 10) - 200;
-        publicComponent.y = sortedNames.indexOf(name) * (biggestSize + 10);
-        publicComponent.locked = false;
-      });
+    const foundComponents = publicComponents.filter((publicComponent) => {
+      const [, , name] = publicComponent.name.split("/");
+      return componentSets.find((cs) => cs.name === `_${name}`);
+    });
+    const sortedFoundComponentsNames: string[] = [
+      ...new Set(
+        foundComponents.map((component) => component.name.split("/")[2])
+      ),
+    ].sort();
+    foundComponents.forEach((publicComponent, index) => {
+      const [, size, name] = publicComponent.name.split("/");
+      publicComponent.x =
+        sortedSizes.indexOf(parseInt(size)) * (biggestSize + 10);
+      publicComponent.y =
+        sortedFoundComponentsNames.indexOf(name) * (biggestSize + 10);
+      publicComponent.locked = true;
+    });
+    // Stash icons without any raw version (maybe renamed or deleted icons!)
+    const notFoundComponents = publicComponents.filter((publicComponent) => {
+      const [, , name] = publicComponent.name.split("/");
+      return !componentSets.find((cs) => cs.name === `_${name}`);
+    });
+    const sortedNotFoundComponentsNames: string[] = [
+      ...new Set(
+        notFoundComponents.map((component) => component.name.split("/")[2])
+      ),
+    ].sort();
+    notFoundComponents.forEach((publicComponent) => {
+      const [, size, name] = publicComponent.name.split("/");
+      publicComponent.x =
+        sortedSizes.indexOf(parseInt(size)) * (biggestSize + 10) - STASH_MARGIN;
+      publicComponent.y =
+        sortedNotFoundComponentsNames.indexOf(name) * (biggestSize + 10);
+      publicComponent.locked = false;
+    });
   }
   const stop = new Date();
   console.log(
@@ -249,9 +256,11 @@ figma.ui.onmessage = async (msg) => {
             }
           });
       });
+    // Reorganize all SVG in the generated page
     reorganize();
   }
   if (msg.type === "reorganize-svg") {
+    // Reorganize all SVG in the generated page
     reorganize();
   }
 };
