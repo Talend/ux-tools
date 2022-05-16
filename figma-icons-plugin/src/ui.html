@@ -25,8 +25,7 @@
       // DOM Elements to animate
       const progress = document.getElementById("progress");
       const text = document.getElementById("text");
-      const reorganizeButton = document.getElementById("reorganize");
-      const createButton = document.getElementById("create");
+      const button = document.getElementById("create");
 
       const icons = event.data.pluginMessage.data;
       const styleId = event.data.pluginMessage.styleId;
@@ -34,8 +33,7 @@
       // Init progress
       const total = icons.length;
       progress.max = total;
-      hide(reorganizeButton);
-      hide(createButton);
+      hide(button);
       show(text);
       text.innerText = `Warm up!`;
 
@@ -73,8 +71,7 @@
       hide(progress);
       text.className = undefined;
       text.innerText = `👊 Done!`;
-      show(reorganizeButton);
-      show(createButton);
+      show(button);
 
       window.parent.postMessage(
         {
