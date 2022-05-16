@@ -11,6 +11,15 @@
     const show = (element) => (element.style = undefined);
     const hide = (element) => (element.style = "display: none");
 
+    function sliceIntoChunks(array, chunkSize) {
+      const results = [];
+      for (let i = 0; i < array.length; i += chunkSize) {
+        const chunk = array.slice(i, i + chunkSize);
+        results.push(chunk);
+      }
+      return results;
+    }
+
     // When network request is needed
     if (event.data.pluginMessage.type === "networkRequest") {
       // DOM Elements to animate
@@ -29,32 +38,34 @@
       text.innerText = `Warm up!`;
 
       const data = [];
-      for await (const [index, svg] of icons.entries()) {
-        const formData = new FormData();
-        const file = new Blob([svg.data], {
-          type: "image/svg+xml",
-        });
-        formData.append("file", file);
-        const res = await fetch(
-          `https://svg-optimizer.tools.dev.datapwn.com/process/${
-            svg.size || "24"
-          }`,
-          {
-            method: "POST",
-            body: formData,
-          }
-        );
-        const blob = await res.blob();
-        const blobText = await blob.text();
-        data.push({ ...svg, data: blobText });
+      for (const iconsChunk of sliceIntoChunks(icons, 200)) {
+        for await (const [index, svg] of iconsChunk.entries()) {
+          const formData = new FormData();
+          const file = new Blob([svg.data], {
+            type: "image/svg+xml",
+          });
+          formData.append("file", file);
+          const res = await fetch(
+            `https://svg-optimizer.tools.dev.datapwn.com/process/${
+              svg.size || "24"
+            }`,
+            {
+              method: "POST",
+              body: formData,
+            }
+          );
+          const blob = await res.blob();
+          const blobText = await blob.text();
+          data.push({ ...svg, data: blobText });
 
-        // Update status for each icon
-        progress.value = index + 1;
-        progress.innerText = `${((index + 1) * 100) / total}%`;
-        text.innerText = `${index + 1}/${total} icons`;
-        if (!index) {
-          show(progress);
-          text.className = "emoji hourglass";
+          // Update status for each icon
+          progress.value = index + 1;
+          progress.innerText = `${((index + 1) * 100) / total}%`;
+          text.innerText = `${index + 1}/${total} icons`;
+          if (!index) {
+            show(progress);
+            text.className = "emoji hourglass";
+          }
         }
       }
 
