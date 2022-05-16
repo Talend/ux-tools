@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import fs from "fs";
 import fetch from "node-fetch";
 import * as Figma from "figma-js";
@@ -21,6 +23,20 @@ const client = Figma.Client({
 });
 
 (async () => {
+  async function replaceInFile(
+    filename: fs.PathLike,
+    searchValue: RegExp,
+    replacement: string
+  ) {
+    try {
+      const contents = await fsPromises.readFile(filename, "utf-8");
+      const replaced = contents.replace(searchValue, replacement);
+      await fsPromises.writeFile(filename, replaced);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
   const { data: me } = await client.me();
   console.log("Hello, " + me.handle + "!");
 
@@ -35,7 +51,9 @@ const client = Figma.Client({
     child.name.includes("🔒")
   );
   if (page && "children" in page) {
-    console.log(`Page "${page.name}" is found in the file. Let's find icons!`);
+    console.log(
+      `Page "${page.name}" is found in the file. Let's export icons, now!`
+    );
     const icons = page.children
       .filter((child) => child.type === "COMPONENT")
       .filter((child) => child.name.startsWith("icon/")) as Figma.Component[];
@@ -54,25 +72,37 @@ const client = Figma.Client({
       `${icons.length} icons have been found in this page. Let's export them locally!`
     );
     icons.sort((a, b) => a.name.localeCompare(b.name));
-    const { data: image } = await client.fileImages(conf.fileId, {
-      ids: icons.map((icon) => icon.id),
-      format: "svg",
-    });
 
-    for await (const [nodeId, imageUrl] of Object.entries(image.images)) {
-      const icon = icons.find((i) => i.id === nodeId);
-      if (icon) {
-        await bar.tick({ icon: icon.name });
-        const filePathArr = icon.name.split("/");
-        filePathArr.pop();
-        const dir = "output/" + filePathArr.join("/");
-        if (!fs.existsSync(dir)) {
-          await fsPromises.mkdir(dir, { recursive: true });
+    function sliceIntoChunks(array: Figma.Component[], chunkSize: number) {
+      const results = [];
+      for (let i = 0; i < array.length; i += chunkSize) {
+        const chunk = array.slice(i, i + chunkSize);
+        results.push(chunk);
+      }
+      return results;
+    }
+    for (const chunk of sliceIntoChunks(icons, 100)) {
+      const { data: image } = await client.fileImages(conf.fileId, {
+        ids: chunk.map((icon: Figma.Component) => icon.id),
+        format: "svg",
+      });
+
+      for await (const [nodeId, imageUrl] of Object.entries(image.images)) {
+        const icon = chunk.find((i: Figma.Component) => i.id === nodeId);
+        if (icon) {
+          await bar.tick({ icon: icon.name });
+          const filePathArr = icon.name.split("/");
+          filePathArr.pop();
+          const dir = "output/" + filePathArr.join("/");
+          if (!fs.existsSync(dir)) {
+            await fsPromises.mkdir(dir, { recursive: true });
+          }
+          const filePath = "output/" + icon.name + ".svg";
+          const imagePromiseResponse = await fetch(imageUrl);
+          const file = await imagePromiseResponse.buffer();
+          await fsPromises.writeFile(filePath, file);
+          await replaceInFile(filePath, /#202020/gi, "currentColor");
         }
-        const filePath = "output/" + icon.name + ".svg";
-        const imagePromiseResponse = await fetch(imageUrl);
-        const file = await imagePromiseResponse.buffer();
-        await fsPromises.writeFile(filePath, file);
       }
     }
   }
