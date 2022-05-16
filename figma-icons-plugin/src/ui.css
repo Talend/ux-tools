@@ -27,8 +27,8 @@ body {
 }
 
 .hourglass::before {
-  content: '⏳';
-  --emoji: '⌛️';
+  content: "⏳";
+  --emoji: "⌛️";
   animation-name: twoFrames;
   animation-duration: 1.2s;
 }

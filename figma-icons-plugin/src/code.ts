@@ -79,6 +79,38 @@ async function sendSVG(nodes: SceneNode[]) {
   });
 }
 
+function revamp() {
+  let pageNode: PageNode | undefined = figma.root
+      .findAllWithCriteria({
+        types: ["PAGE"],
+      })
+      .find((page) => page.name === PAGE_NAME);
+  if (pageNode) {
+    const publicComponents: ComponentNode[] = pageNode.findAllWithCriteria({
+      types: ["COMPONENT"],
+    });
+    const sortedNames: string[] = [...new Set(publicComponents.map(component => component.name.split('/')[2]))].sort();
+    let sizes: number[] = [];
+    publicComponents.forEach(publicComponent => {
+      const [, size] = publicComponent.name.split("/");
+      const intSize = parseInt(size);
+      if (!sizes.includes(intSize)) {
+        sizes.push(intSize);
+      }
+    })
+    const sortedSizes: number[] = [...new Set(sizes)].sort((a, b) => a - b);
+    const biggestSize = sortedSizes.reverse()[0];
+    console.log({ sortedNames, sortedSizes, biggestSize } );
+    publicComponents.forEach((publicComponent) => {
+      const [, size, name] = publicComponent.name.split("/");
+      console.log({ sortedSizes, intSize: parseInt(size), biggestSize } );
+      publicComponent.x =
+          sortedSizes.indexOf(parseInt(size)) * (biggestSize + 10);
+      publicComponent.y = sortedNames.indexOf(name) * (biggestSize + 10);
+    });
+  }
+}
+
 figma.ui.onmessage = async (msg) => {
   if (msg.type === "cancel") {
     figma.closePlugin();
@@ -126,7 +158,7 @@ figma.ui.onmessage = async (msg) => {
       // All available icon names in the page
       names = pageNode
         .findAllWithCriteria({ types: ["COMPONENT"] })
-        .filter((componentNode) => !componentNode.name.startsWith("_"))
+        .filter((componentNode) => componentNode.name.startsWith("_"))
         .map((componentNode) => componentNode.name.split("/").reverse()[0]);
       Object.keys(components).map((componentName) => {
         const currentComponentName = getPublicComponentName(componentName);
@@ -193,14 +225,9 @@ figma.ui.onmessage = async (msg) => {
             publicComponent.y = sortedNames.indexOf(name) * (biggestSize + 10);
           });
       });
-    const publicComponents: ComponentNode[] = pageNode.findAllWithCriteria({
-      types: ["COMPONENT"],
-    });
-    publicComponents.forEach((publicComponent) => {
-      const [, size, name] = publicComponent.name.split("/");
-      publicComponent.x =
-        sortedSizes.indexOf(parseInt(size)) * (biggestSize + 10);
-      publicComponent.y = sortedNames.indexOf(name) * (biggestSize + 10);
-    });
+    revamp();
+  }
+  if (msg.type === "revamp-svg") {
+    revamp();
   }
 };
