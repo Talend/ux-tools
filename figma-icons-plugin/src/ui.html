@@ -7,14 +7,12 @@
 
 <script>
   window.onmessage = async (event) => {
-
     // DOM Elements helpers
     const show = (element) => (element.style = undefined);
     const hide = (element) => (element.style = "display: none");
 
     // When network request is needed
     if (event.data.pluginMessage.type === "networkRequest") {
-
       // DOM Elements to animate
       const progress = document.getElementById("progress");
       const text = document.getElementById("text");

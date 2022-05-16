@@ -79,6 +79,65 @@ async function sendSVG(nodes: SceneNode[]) {
   });
 }
 
+function reorganize() {
+  const start = new Date();
+  console.log("Start reorganizing icons");
+  let pageNode: PageNode | undefined = figma.root
+    .findAllWithCriteria({
+      types: ["PAGE"],
+    })
+    .find((page) => page.name === PAGE_NAME);
+  if (pageNode) {
+    const publicComponents: ComponentNode[] = pageNode.findAllWithCriteria({
+      types: ["COMPONENT"],
+    });
+    let sizes: number[] = [];
+    publicComponents.forEach((publicComponent) => {
+      const [, size] = publicComponent.name.split("/");
+      const intSize = parseInt(size);
+      if (!sizes.includes(intSize)) {
+        sizes.push(intSize);
+      }
+    });
+    const sortedSizes: number[] = [...new Set(sizes)].sort((a, b) => a - b);
+    const biggestSize = sortedSizes.reverse()[0];
+    const componentSets = figma.root.findAllWithCriteria({
+      types: ["COMPONENT_SET"],
+    });
+    const foundComponents = publicComponents.filter((publicComponent) => {
+      const [, , name] = publicComponent.name.split("/");
+      return componentSets.find((cs) => cs.name === `_${name}`);
+    });
+    const sortedFoundComponentsNames: string[] = [
+      ...new Set(
+        foundComponents.map((component) => component.name.split("/")[2])
+      ),
+    ].sort();
+    foundComponents.forEach((publicComponent, index) => {
+      const [, size, name] = publicComponent.name.split("/");
+      publicComponent.x =
+        sortedSizes.indexOf(parseInt(size)) * (biggestSize + 10);
+      publicComponent.y =
+        sortedFoundComponentsNames.indexOf(name) * (biggestSize + 10);
+      publicComponent.locked = true;
+    });
+    // Remove icons without any raw version (maybe renamed or deleted icons!)
+    const notFoundComponents = publicComponents.filter((publicComponent) => {
+      const [, , name] = publicComponent.name.split("/");
+      return !componentSets.find((cs) => cs.name === `_${name}`);
+    });
+    notFoundComponents.forEach((publicComponent) => {
+      publicComponent.remove();
+    });
+  }
+  const stop = new Date();
+  console.log(
+    `Stop reorganizing icons (time elapsed=${
+      stop.getTime() - start.getTime()
+    }ms)`
+  );
+}
+
 figma.ui.onmessage = async (msg) => {
   if (msg.type === "cancel") {
     figma.closePlugin();
@@ -126,7 +185,7 @@ figma.ui.onmessage = async (msg) => {
       // All available icon names in the page
       names = pageNode
         .findAllWithCriteria({ types: ["COMPONENT"] })
-        .filter((componentNode) => !componentNode.name.startsWith("_"))
+        .filter((componentNode) => componentNode.name.startsWith("_"))
         .map((componentNode) => componentNode.name.split("/").reverse()[0]);
       Object.keys(components).map((componentName) => {
         const currentComponentName = getPublicComponentName(componentName);
@@ -135,10 +194,6 @@ figma.ui.onmessage = async (msg) => {
         }
       });
     }
-    // Get ordered and unique names and sizes
-    const sortedNames: string[] = [...new Set(names)].sort();
-    const sortedSizes: number[] = [...new Set(sizes)].sort((a, b) => a - b);
-    const biggestSize = sortedSizes.reverse()[0];
     Object.entries(components)
       .sort(([componentNameA], [componentNameB]) =>
         componentNameA.localeCompare(componentNameB)
@@ -188,19 +243,9 @@ figma.ui.onmessage = async (msg) => {
               publicComponent.appendChild(icon);
               (pageNode as PageNode).appendChild(publicComponent);
             }
-            // Move public component to the right position
-            publicComponent.x = sortedSizes.indexOf(size) * (biggestSize + 10);
-            publicComponent.y = sortedNames.indexOf(name) * (biggestSize + 10);
           });
       });
-    const publicComponents: ComponentNode[] = pageNode.findAllWithCriteria({
-      types: ["COMPONENT"],
-    });
-    publicComponents.forEach((publicComponent) => {
-      const [, size, name] = publicComponent.name.split("/");
-      publicComponent.x =
-        sortedSizes.indexOf(parseInt(size)) * (biggestSize + 10);
-      publicComponent.y = sortedNames.indexOf(name) * (biggestSize + 10);
-    });
+    // Reorganize all SVG in the generated page
+    reorganize();
   }
 };
