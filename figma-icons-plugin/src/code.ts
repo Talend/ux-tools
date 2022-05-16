@@ -79,36 +79,67 @@ async function sendSVG(nodes: SceneNode[]) {
   });
 }
 
-function revamp() {
+function reorganize() {
+  const start = new Date();
+  console.log("Start reorganizing icons");
   let pageNode: PageNode | undefined = figma.root
-      .findAllWithCriteria({
-        types: ["PAGE"],
-      })
-      .find((page) => page.name === PAGE_NAME);
+    .findAllWithCriteria({
+      types: ["PAGE"],
+    })
+    .find((page) => page.name === PAGE_NAME);
   if (pageNode) {
     const publicComponents: ComponentNode[] = pageNode.findAllWithCriteria({
       types: ["COMPONENT"],
     });
-    const sortedNames: string[] = [...new Set(publicComponents.map(component => component.name.split('/')[2]))].sort();
+    const sortedNames: string[] = [
+      ...new Set(
+        publicComponents.map((component) => component.name.split("/")[2])
+      ),
+    ].sort();
     let sizes: number[] = [];
-    publicComponents.forEach(publicComponent => {
+    publicComponents.forEach((publicComponent) => {
       const [, size] = publicComponent.name.split("/");
       const intSize = parseInt(size);
       if (!sizes.includes(intSize)) {
         sizes.push(intSize);
       }
-    })
+    });
     const sortedSizes: number[] = [...new Set(sizes)].sort((a, b) => a - b);
     const biggestSize = sortedSizes.reverse()[0];
-    console.log({ sortedNames, sortedSizes, biggestSize } );
-    publicComponents.forEach((publicComponent) => {
-      const [, size, name] = publicComponent.name.split("/");
-      console.log({ sortedSizes, intSize: parseInt(size), biggestSize } );
-      publicComponent.x =
-          sortedSizes.indexOf(parseInt(size)) * (biggestSize + 10);
-      publicComponent.y = sortedNames.indexOf(name) * (biggestSize + 10);
+    const componentSets = figma.root.findAllWithCriteria({
+      types: ["COMPONENT_SET"],
     });
+    publicComponents
+      .filter((publicComponent) => {
+        const [, , name] = publicComponent.name.split("/");
+        return componentSets.find((cs) => cs.name === `_${name}`);
+      })
+      .forEach((publicComponent, index) => {
+        const [, size, name] = publicComponent.name.split("/");
+        publicComponent.x =
+          sortedSizes.indexOf(parseInt(size)) * (biggestSize + 10);
+        publicComponent.y = sortedNames.indexOf(name) * (biggestSize + 10);
+        publicComponent.locked = true;
+      });
+    publicComponents
+      .filter((publicComponent) => {
+        const [, , name] = publicComponent.name.split("/");
+        return !componentSets.find((cs) => cs.name === `_${name}`);
+      })
+      .forEach((publicComponent) => {
+        const [, size, name] = publicComponent.name.split("/");
+        publicComponent.x =
+          sortedSizes.indexOf(parseInt(size)) * (biggestSize + 10) - 200;
+        publicComponent.y = sortedNames.indexOf(name) * (biggestSize + 10);
+        publicComponent.locked = false;
+      });
   }
+  const stop = new Date();
+  console.log(
+    `Stop reorganizing icons (time elapsed=${
+      stop.getTime() - start.getTime()
+    }ms)`
+  );
 }
 
 figma.ui.onmessage = async (msg) => {
@@ -167,10 +198,6 @@ figma.ui.onmessage = async (msg) => {
         }
       });
     }
-    // Get ordered and unique names and sizes
-    const sortedNames: string[] = [...new Set(names)].sort();
-    const sortedSizes: number[] = [...new Set(sizes)].sort((a, b) => a - b);
-    const biggestSize = sortedSizes.reverse()[0];
     Object.entries(components)
       .sort(([componentNameA], [componentNameB]) =>
         componentNameA.localeCompare(componentNameB)
@@ -220,14 +247,11 @@ figma.ui.onmessage = async (msg) => {
               publicComponent.appendChild(icon);
               (pageNode as PageNode).appendChild(publicComponent);
             }
-            // Move public component to the right position
-            publicComponent.x = sortedSizes.indexOf(size) * (biggestSize + 10);
-            publicComponent.y = sortedNames.indexOf(name) * (biggestSize + 10);
           });
       });
-    revamp();
+    reorganize();
   }
-  if (msg.type === "revamp-svg") {
-    revamp();
+  if (msg.type === "reorganize-svg") {
+    reorganize();
   }
 };

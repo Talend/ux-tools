@@ -7,9 +7,9 @@ const App = () => {
     parent.postMessage({ pluginMessage: { type: "create-request" } }, "*");
   };
 
-  const onRevamp = () => {
-    parent.postMessage({ pluginMessage: { type: "revamp-svg" } }, "*");
-  }
+  const onReorganize = () => {
+    parent.postMessage({ pluginMessage: { type: "reorganize-svg" } }, "*");
+  };
 
   const onCancel = () => {
     parent.postMessage({ pluginMessage: { type: "cancel" } }, "*");
@@ -20,8 +20,8 @@ const App = () => {
       <button id="cancel" onClick={onCancel}>
         Cancel
       </button>
-      <button id="revamp" onClick={onRevamp}>
-        Revamp
+      <button id="reorganize" onClick={onReorganize}>
+        Reorganize
       </button>
       <button id="create" onClick={onCreate}>
         Process
