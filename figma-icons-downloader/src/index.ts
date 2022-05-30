@@ -93,11 +93,11 @@ const client = Figma.Client({
           await bar.tick({ icon: icon.name });
           const filePathArr = icon.name.split("/");
           filePathArr.pop();
-          const dir = "output/" + filePathArr.join("/");
+          const dir = "src/" + filePathArr.join("/");
           if (!fs.existsSync(dir)) {
             await fsPromises.mkdir(dir, { recursive: true });
           }
-          const filePath = "output/" + icon.name + ".svg";
+          const filePath = "src/" + icon.name + ".svg";
           const imagePromiseResponse = await fetch(imageUrl);
           const file = await imagePromiseResponse.buffer();
           await fsPromises.writeFile(filePath, file);
