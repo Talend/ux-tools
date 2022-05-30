@@ -1,9 +1,9 @@
 {
   "name": "@talend/figma-icons-downloader",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "lib/index.js",
-  "private": "true",
   "bin": "./bin/index.js",
+  "license": "Apache-2.0",
   "scripts": {
     "build": "tsc",
     "prepublish": "yarn build"
