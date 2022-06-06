@@ -13,6 +13,28 @@ function matchNeutralIconCriteria(currentNode: SceneNode) {
   return style.name === "neutral/icon";
 }
 
+function getTShirtSize(size: string) {
+  return (
+    {
+      8: "XS",
+      12: "S",
+      16: "M",
+      24: "L",
+    }[parseInt(size)] || size
+  );
+}
+
+function getNumericSize(size: string) {
+  return (
+    {
+      XS: 8,
+      S: 12,
+      M: 16,
+      L: 24,
+    }[size] || parseInt(size)
+  );
+}
+
 function getChildWithMatchingStyle(node: SceneNode) {
   let found: SceneNode | undefined;
   function traverse(n: SceneNode) {
@@ -56,7 +78,7 @@ function getGeneratedComponentName({
   size: number;
   name: string;
 }) {
-  return `icon/${size}/${name}`;
+  return `icon/${getTShirtSize(size.toString())}/${name}`;
 }
 
 async function sendSVG(nodes: SceneNode[]) {
@@ -94,7 +116,7 @@ function reorganize() {
     let sizes: number[] = [];
     publicComponents.forEach((publicComponent) => {
       const [, size] = publicComponent.name.split("/");
-      const intSize = parseInt(size);
+      const intSize = getNumericSize(size);
       if (!sizes.includes(intSize)) {
         sizes.push(intSize);
       }
@@ -113,10 +135,17 @@ function reorganize() {
         foundComponents.map((component) => component.name.split("/")[2])
       ),
     ].sort();
-    foundComponents.forEach((publicComponent, index) => {
-      const [, size, name] = publicComponent.name.split("/");
+    foundComponents.forEach((publicComponent) => {
+      const [prefix, size, name] = publicComponent.name.split("/");
+      const privateComponentSet = componentSets.find(
+        (cs) => cs.name === `_${name}`
+      );
+      if (privateComponentSet?.description) {
+        publicComponent.description = privateComponentSet.description;
+      }
+      publicComponent.name = [prefix, getTShirtSize(size), name].join("/");
       publicComponent.x =
-        sortedSizes.indexOf(parseInt(size)) * (biggestSize + 10);
+        sortedSizes.indexOf(getNumericSize(size)) * (biggestSize + 10);
       publicComponent.y =
         sortedFoundComponentsNames.indexOf(name) * (biggestSize + 10);
       publicComponent.locked = true;
