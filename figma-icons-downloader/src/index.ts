@@ -4,6 +4,7 @@ import fs from "fs";
 import fetch from "node-fetch";
 import * as Figma from "figma-js";
 import ProgressBar from "progress";
+import { ComponentMetadata } from "figma-js";
 
 const fsPromises = fs.promises;
 
@@ -54,9 +55,18 @@ const client = Figma.Client({
     console.log(
       `Page "${page.name}" is found in the file. Let's export icons, now!`
     );
-    const icons = page.children
-      .filter((child) => child.type === "COMPONENT")
-      .filter((child) => child.name.startsWith("icon/")) as Figma.Component[];
+    const icons = page.children.filter(
+      (child) => child.type === "COMPONENT" && child.name.startsWith("icon/")
+    ) as Figma.Component[];
+
+    const metadata: ComponentMetadata[] = [];
+    icons.forEach((icon) => {
+      const iconMetadata = file.components[icon.id];
+      metadata.push({
+        ...iconMetadata,
+        description: iconMetadata.description?.replace(/\n/g, " ").trim(),
+      });
+    });
 
     const bar = new ProgressBar(
       ':percent [:bar] downloading ":icon" :current/:total',
@@ -105,5 +115,10 @@ const client = Figma.Client({
         }
       }
     }
+
+    await fsPromises.writeFile(
+      "src/metadata.json",
+      JSON.stringify(metadata, null, 2)
+    );
   }
 })();
